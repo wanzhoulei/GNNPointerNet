@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.spatial import Delaunay
+from scipy.spatial import ConvexHull
 
 import matplotlib.pyplot as plt
 import torch
@@ -14,7 +15,7 @@ from typing import Sequence
 #this function creates and retunrs an adjacency matrix by taking the triangle list
 def get_adj_mtx(tri, N):
     adj = np.zeros((N, N))
-    for triangle in tri.simplices:
+    for triangle in tri:
         adj[triangle[0], triangle[1]] = 1
         adj[triangle[1], triangle[0]] = 1
         adj[triangle[0], triangle[2]] = 1
