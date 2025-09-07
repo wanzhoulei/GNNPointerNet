@@ -3,6 +3,9 @@
 This repository contains code for training a Graph Neural Network (GNN) model 
 to generate **2D Delaunay-like meshes** from point coordinates.
 
+## 📌 Project Poster
+[![Poster Preview](assets/poster_preview.png)](assets/MeshingPoster.pdf)
+
 ## Structure
 - `data/` — raw and processed data, plus loaders
 - `gnnpointernet/` — main source code
