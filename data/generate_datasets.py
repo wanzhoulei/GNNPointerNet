@@ -1,3 +1,11 @@
+## Author: Wanzhou Lei @ Sept 2025. Email: wanzhou_lei@berkeley.edu
+
+## Script generates the two train and test dataset we need for training and evaluation. 
+## The training set contains 10,000 delaunay graphs of 20 points.
+## The testing set contains 5,000 delaunay graphs of 20 points. 
+## Both uses a knn graph of k = 5 to traverse the coordinates. 
+## Note that one graph can be traversed in many different orders, resulting in more sequences in the dataset. 
+
 import numpy as np
 from data import *
 
