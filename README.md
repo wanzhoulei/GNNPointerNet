@@ -52,6 +52,22 @@ python -m experiments.train [options]
 ```
 to build and train the model using different hyperparameters. Look into the usage documentation in the header of `train.py` to see the details. `train.py` script also logs and saves the models and the loss, iou trace, in the `./experiments/checkpoints/` folder, which we will use later. 
 
+### Evaluate the Model
+In the root folder, run the following code to evaluate the model:
+```bash
+python -m experiments.evaluate \
+        --checkpoint_dir experiments/checkpoints/model_folder_name \
+        --train_path datasets/train_data_file_name.npz \
+        --test_path  datasets/test_data_file_name.npz
+```
+Look into the documentation in the header of `evaluate.py` to see details of usage of code. 
+
+This script:
+  1) Loads a training run from a checkpoint directory, plots the loss/IoU trace and saves the figure in-place.
+  2) Loads all intermediate checkpoints (model_epoch*.pt) and the final model (gnnpointernet_final.pt).
+  3) Evaluates each model on train & test datasets w/o teacher forcing using IoU and accuracy; prints and logs results to evaluation.txt.
+
+
 
 
 
