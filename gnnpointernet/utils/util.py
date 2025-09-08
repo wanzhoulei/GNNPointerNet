@@ -1,3 +1,11 @@
+'''
+Author: Wanzhou Lei @ Sept 2025. Email: wanzhou_lei@berkeley.edu
+
+This script is just a utility function for plotting purpose. 
+
+'''
+
+
 from matplotlib import pyplot as plt
 import torch
 import numpy as np

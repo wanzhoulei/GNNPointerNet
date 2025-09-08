@@ -1,4 +1,13 @@
-import numpy as np
+
+'''
+Author: Wanzhou Lei @ Sept 2025. Email: wanzhou_lei@berkeley.edu
+
+This script defines all the models I used in this project. 
+Some of those models below are not used. They are legacy models used in previous versions. 
+well, it also contains some utility tools in data manipulation. 
+
+'''
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -116,14 +125,14 @@ def make_pyg_batch_wedge(points_batch, k):
     p_tgt = x[tgt]  # (E, 2)
 
     # Midpoint
-    midpoint = 0.5 * (p_src + p_tgt)         # (E, 2)
+    midpoint = 0.5 * (p_src + p_tgt)
     # Length
-    length = (p_tgt - p_src).norm(dim=1)     # (E,)
-    # Orientation (angle)
+    length = (p_tgt - p_src).norm(dim=1)
+    # Orientation
     orientation = torch.atan2(
         (p_tgt[:, 1] - p_src[:, 1]),
         (p_tgt[:, 0] - p_src[:, 0])
-    )  # (E,)
+    )  
 
     edge_attr = torch.cat([
         midpoint, 
@@ -522,18 +531,17 @@ class DecoderLSTM(nn.Module):
 class DecoderLSTM_att(nn.Module):
     """
     Decoder with causal self-attention.
-    • identical public API to DecoderLSTM
-    • after each LSTMCell step, the current hidden state attends over
+      identical public API to DecoderLSTM
+      after each LSTMCell step, the current hidden state attends over
       all previous decoder hidden states (including itself)
     """
     def __init__(self, hidden_dim, num_layers=1, num_heads=4, dropout=0.0, num_cold_start=0):
         """
-        Args
-        ----
-        hidden_dim : int   - dimension of LSTM hidden state
-        num_layers : int   - # layers in LSTMCell stack  (kept for parity)
-        num_heads  : int   - heads in MultiheadAttention
-        dropout    : float - dropout inside attention
+        Arguments:
+            hidden_dim: int   - dimension of LSTM hidden state
+            num_layers: int   - # layers in LSTMCell stack  (kept for parity)
+            num_heads: int   - heads in MultiheadAttention
+            dropout: float - dropout inside attention
         """
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -559,7 +567,7 @@ class DecoderLSTM_att(nn.Module):
         batch_size, N, hd = encoder_outputs.shape
         pointer_logits_list, chosen_indices_list = [], []
         input_t = initial_input
-        saved_hiddens = []                         # ← list of *copies*
+        saved_hiddens = []
 
         if teacher_indices is not None and teacher_indices.shape[1] < max_steps:
             teacher_indices = F.pad(teacher_indices,
@@ -600,10 +608,10 @@ class DecoderLSTM_att(nn.Module):
 
 
         for t in range(max_steps):
-            # 1) LSTM step
+            # LSTM step
             hidden, cell = self.lstm_cell(input_t, (hidden, cell))   # (B, hd)
 
-            # 2) save a copy for causal self‑attention
+            # save a copy for causal self‑attention
             saved_hiddens.append(hidden.clone())                     #   changed
 
             kv = torch.stack(saved_hiddens, dim=1)                   # (B, t+1, hd)
@@ -612,7 +620,7 @@ class DecoderLSTM_att(nn.Module):
             attn_out = attn_out.squeeze(1)
             hidden_ctx = 0.5 * (hidden + attn_out)                   # residual
 
-            # 3) pointer distribution
+            # pointer distribution
             query = self.query_transform(hidden_ctx)
             pointer_logits = torch.sum(
                 query.unsqueeze(1) * encoder_outputs, dim=-1)
@@ -622,7 +630,7 @@ class DecoderLSTM_att(nn.Module):
             #sort the indices
             top3_pred, _ = torch.sort(top3_pred, dim=1)
 
-            # 4) teacher forcing
+            # teacher forcing
             if teacher_indices is None:
                 next_indices = top3_pred
             else:
@@ -633,7 +641,7 @@ class DecoderLSTM_att(nn.Module):
 
             chosen_indices_list.append(top3_pred)
 
-            # 5) build next input
+            # build next input
             top3_vec = torch.gather(
                 encoder_outputs,
                 1,
@@ -682,7 +690,7 @@ class PointerNetForTriangles(nn.Module):
         """
         batch_size, seq_len, _ = x.shape
         
-        # 1) Encode
+        # Encode
         encoder_outputs, (h_enc, c_enc) = self.encoder(x)
         # h_enc, c_enc: shape (num_layers, batch, hidden_dim)
         
@@ -690,16 +698,16 @@ class PointerNetForTriangles(nn.Module):
         h_enc = h_enc[-1]  # (batch, hidden_dim)
         c_enc = c_enc[-1]  # (batch, hidden_dim)
         
-        # 2) Append "end node" to encoder_outputs
+        # Append "end node" to encoder_outputs
         end_node_tiled = self.end_node_embed.unsqueeze(0).expand(batch_size, -1, -1)
         encoder_outputs = torch.cat([encoder_outputs, end_node_tiled], dim=1)
         # Now encoder_outputs has shape (batch, N, hidden_dim)
         # N = seq_len + 1  (the extra one is the end node)
         
-        # 3) Prepare the decoder's initial input from the start token
+        # Prepare the decoder's initial input from the start token
         start_tiled = self.start_token_embed.expand(batch_size, -1)  # (batch_size, 3*hidden_dim)
         
-        # 4) Run the decoder
+        # Run the decoder
         pointer_logits_list, chosen_indices_list = self.decoder(
             encoder_outputs,
             h_enc,
