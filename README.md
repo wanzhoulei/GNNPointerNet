@@ -6,6 +6,7 @@ to generate **2D Delaunay-like meshes** from point coordinates.
 It is basically an immitation of Delaunay Meshing. The input is a sequence 2D points and the output is a sequences of triangles. 
 
 ## Project Poster
+The design details of the GNNPointerNet is documented in the following poster. 
 [![Poster Preview](assets/poster_preview.png)](assets/MeshingPoster.pdf)
 
 ## Repo Structure
