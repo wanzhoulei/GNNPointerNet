@@ -35,12 +35,24 @@ In `GNNPointerNet/data/` folder, run the following bash code:
 ```bash
 python generate_datasets.py
 ```
-The code generates a training set that contains 10,000 delaunay graphs of 20 points and a test set that contains \
-5,000 delaunay graphs with 20 points. Each dataset consists of many pairs of sequences $(\{(x_i, y_i) \}, {t_i}  )$\
-The first sequence is a sequence of coordinates of points, traversed in BFS order in the knn graph (k = 5) \ 
-The second sequence if a sequence of triangles, traversed in BFS order in the delaunay graph. \
-Triangles are considered connected iif they share an edge. Because of the difference ways to traverse the points and triangles, there are more than 10,000 pairs of sequences in the train dataset and more than 5,000 pairs of sequences in the test dataset. \
+The code generates a training set that contains 10,000 delaunay graphs of 20 points and a test set that contains 5,000 delaunay graphs with 20 points. Each dataset consists of many pairs of sequences $(\{(x_i, y_i) \}, {t_i}  )$.
+
+The first sequence is a sequence of coordinates of points, traversed in BFS order in the knn graph (k = 5). The second sequence if a sequence of triangles, traversed in BFS order in the delaunay graph. Triangles are considered connected iif they share an edge. Because of the difference ways to traverse the points and triangles, there are more than 10,000 pairs of sequences in the train dataset and more than 5,000 pairs of sequences in the test dataset. 
+
 Feel free to tweak the code to generate differnet dataset. 
+
+### Build and Train the Model
+In the root folder, run the following bash code:
+```bash
+python -m experiments.train
+```
+This code runs the `train.py` script in the default setting, which is the setting I used to train the model. But you can always run the code using different arguments:
+```bash
+python -m experiments.train [options]
+```
+to build and train the model using different hyperparameters. Look into the usage documentation in the header of `train.py` to see the details. `train.py` script also logs and saves the models and the loss, iou trace, in the `./experiments/checkpoints/` folder, which we will use later. 
+
+
 
 
 
