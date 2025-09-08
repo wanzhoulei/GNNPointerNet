@@ -196,7 +196,7 @@ def main(args):
             torch.save(model.state_dict(), ckpt_path)
             print(f"Saved checkpoint: {ckpt_path}")
 
-    # Save final model + logs
+    # Save final model and logs
     final_model_path = os.path.join(run_dir, "gnnpointernet_final.pt")
     torch.save(model.state_dict(), final_model_path)
     print(f"Training complete! Model saved to {final_model_path}")
@@ -206,7 +206,7 @@ def main(args):
         pickle.dump(
             {
                 "history": history,
-                "config": run_config,  # include hyperparams inside history as well
+                "config": run_config, 
             },
             f,
         )

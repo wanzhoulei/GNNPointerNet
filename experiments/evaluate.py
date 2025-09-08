@@ -226,7 +226,7 @@ def main(args):
     train_loader = DataLoader(train_dataset, batch_size=eval_bs, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=eval_bs, shuffle=False)
 
-    # Decide k and max_steps from config if available; fallback to 5 and 50 (per your example)
+    # Decide k and max_steps from config if available; fallback to 5 and 50
     k_for_knn = 5
     if config and "dataset" in config:
         k_for_knn = config["dataset"].get("k", k_for_knn)

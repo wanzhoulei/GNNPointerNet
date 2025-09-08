@@ -1,3 +1,14 @@
+
+'''
+Author: Wanzhou Lei @ Sept 2025. Email: wanzhou_lei@berkeley.edu
+
+This script defines the loss function used in the training. 
+It also defines the two used evaluation metrics: iou and accuracy. 
+Some of those functions below are not used in training or evaluation. They are legacy from previous versions. But I still want to save them here. 
+
+'''
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -21,7 +32,7 @@ def adjacency_bce_loss(pred_adj, ref_adj, weight=1.0):
     # gather the reference upper triangle => shape (B, #tri_entries)
     ref_upper = ref_adj[:, triu_mask].float()
         
-    # use a BCE loss (or BCEWithLogitsLoss if you want the logits directly)
+    # use a BCE loss 
     bce = nn.BCELoss(reduction='none')
     loss = bce(pred_upper, ref_upper)# shape (B, #tri_entries)
     
@@ -55,6 +66,7 @@ def cross_edge_penalty(pred_matrix, x, thres = 0.5):
     Returns:
         loss: scalar tensor, the number of corssing edges divided by the total number of edges in each graph, averaged by batch 
     '''
+
     pred_matrix = (pred_matrix > 0.5)*1
     B, N, _ = pred_matrix.shape
     penalty = 0
@@ -114,20 +126,19 @@ def cross_edge_penalty_vectorized(pred_matrix, coords, threshold=0.5):
     # Binarize - Not differentiable, but yields a Torch tensor
     A = (pred_matrix > threshold).float()  # shape: (B, N, N)
 
-    # Only consider upper triangle to avoid double counting i->j & j->i
-    #    We'll store that in the same adjacency:
+    # Only consider upper triangle to avoid double counting
     B, N, _ = A.shape
     upper_mask = torch.triu(torch.ones_like(A), diagonal=1)  # shape (B,N,N)
     A = A * upper_mask  # zero out lower-triangle & diagonal
 
     # We'll accumulate the penalty across the batch in a Torch scalar
-    #    (initialized to 0 on the correct device/dtype)
+    # (initialized to 0 on the correct device/dtype)
     device = A.device
     penalty = torch.zeros([], device=device)  # shape ()
 
     # For each batch, find edges (i, j) where A[b, i, j] = 1
-    #    A.nonzero(as_tuple=False) => shape [#edges_total_in_batch, 3],
-    #    columns: [batch_idx, i, j].
+    # A.nonzero(as_tuple=False) => shape [#edges_total_in_batch, 3],
+    # columns: [batch_idx, i, j].
     edges_all = A.nonzero(as_tuple=False)
 
     # We’ll loop over each graph in the batch. (We can’t trivially
@@ -212,12 +223,11 @@ def cross_edge_penalty_vectorized(pred_matrix, coords, threshold=0.5):
 
         # intersection if: 
         #   not parallel, 0 < t < 1, 0 < u < 1
-        # (use >= or <= if you allow endpoints)
         intersect_mask = (~parallel) & (t >= 0) & (t <= 1) & (u >= 0) & (u <= 1)
         num_intersections = intersect_mask.sum()
 
-        # 11) Add to the penalty: (#intersections in this graph / total_edges_in_graph)
-        #     Must stay as a Torch scalar, so we do "penalty += ..."
+        # Add to the penalty: (#intersections in this graph / total_edges_in_graph)
+        # Must stay as a Torch scalar, so we do "penalty += ..."
         penalty = penalty + (num_intersections.float() / E_b)
 
     # Average penalty over the batch 
@@ -265,41 +275,39 @@ def iou_triangles(tri: torch.Tensor, indicies: torch.Tensor) -> float:
     """
     Intersection-over-Union (IoU) between predicted and reference triangles.
 
-    Args
-    ----
-    tri       : Tensor (B, max_len, 3)   - reference sequences, float32
-                 • padding rows are all -1
-                 • the LAST *valid* row is [20,20,20]  (EOS token)
-    indicies  : Tensor (max_len2, B, 3)  - predictions, int64
-                 • the FIRST row that contains a 20 is EOS; rows after that
-                   are ignored
+    Arguments:
+        tri: Tensor (B, max_len, 3)   - reference sequences, float32
+                padding rows are all -1
+                the LAST *valid* row is [20,20,20]  (EOS token)
+        indicies: Tensor (max_len2, B, 3)  - predictions, int64
+                the FIRST row that contains a 20 is EOS; rows after that
+                are ignored
 
-    Returns
-    -------
-    mean_iou  : float   - average IoU over the B graphs
+    Returns:
+    mean_iou: float   - average IoU over the B graphs
     """
 
     B = tri.size(0)
     device = tri.device
 
-    # ---------- 1.  Build a mask of valid reference rows ----------
+    #  Build a mask of valid reference rows 
     #  a row is valid if NOT padding (all != -1) AND NOT EOS (all == 20)
     tri_int = tri.long()
     not_pad = (tri_int != -1).all(dim=-1)
     not_eos = ~(tri_int == 20).all(dim=-1)
-    tri_mask = not_pad & not_eos                                     # (B, L)
+    tri_mask = not_pad & not_eos
 
-    # ---------- 2.  Collect reference triangles as sets of sorted tuples ----------
-    #      shape after sort: (B, L, 3)
+    # Collect reference triangles as sets of sorted tuples
+    # shape after sort: (B, L, 3)
     tri_sorted = tri_int.sort(dim=-1).values
     ref_sets = [
         {tuple(row.tolist()) for row in tri_sorted[b][tri_mask[b]]}
         for b in range(B)
     ]
 
-    # ---------- 3.  Extract valid prediction rows ----------
+    # Extract valid prediction rows
     max_len2 = indicies.size(0)
-    pred = indicies.permute(1, 0, 2).long()                          # (B, L2, 3)
+    pred = indicies.permute(1, 0, 2).long()
 
     pred_sets = []
     for b in range(B):
@@ -308,7 +316,7 @@ def iou_triangles(tri: torch.Tensor, indicies: torch.Tensor) -> float:
         # stop at first row that contains a 20
         eos_idx = (rows == 20).any(dim=-1).nonzero(as_tuple=False)
         if eos_idx.numel():
-            rows = rows[:eos_idx[0, 0]]                              # trim after EOS
+            rows = rows[:eos_idx[0, 0]]
 
         # drop padding rows (if they exist) and sort inside the triple
         rows = rows[(rows != -1).all(dim=-1)]
@@ -316,11 +324,11 @@ def iou_triangles(tri: torch.Tensor, indicies: torch.Tensor) -> float:
 
         pred_sets.append({tuple(r.tolist()) for r in rows})
 
-    # ---------- 4.  IoU per graph ----------
+    # IoU per graph
     ious = []
     for ref, pred in zip(ref_sets, pred_sets):
         if len(ref) == len(pred) == 0:
-            ious.append(1.0)           # empty ↔ empty  ⇒ IoU = 1
+            ious.append(1.0)
             continue
         inter = len(ref & pred)
         union = len(ref | pred)
@@ -332,41 +340,39 @@ def iou_accuracy(tri: torch.Tensor, indicies: torch.Tensor) -> float:
     """
     accuracy of predicted triangle: (number of correct prediction)/(number of predicted triangles)
 
-    Args
-    ----
-    tri       : Tensor (B, max_len, 3)   - reference sequences, float32
-                 • padding rows are all -1
-                 • the LAST *valid* row is [20,20,20]  (EOS token)
-    indicies  : Tensor (max_len2, B, 3)  - predictions, int64
-                 • the FIRST row that contains a 20 is EOS; rows after that
-                   are ignored
+    Arguments:
+        tri: Tensor (B, max_len, 3)   - reference sequences, float32
+                padding rows are all -1
+                the LAST *valid* row is [20,20,20]  (EOS token)
+        indicies: Tensor (max_len2, B, 3)  - predictions, int64
+                the FIRST row that contains a 20 is EOS; rows after that
+                are ignored
 
-    Returns
-    -------
-    mean_accuracy  : float   - average accuracy over the B graphs
+    Returns:
+        mean_accuracy: float   - average accuracy over the B graphs
     """
 
     B = tri.size(0)
     device = tri.device
 
-    # ---------- 1.  Build a mask of valid reference rows ----------
-    #  a row is valid if NOT padding (all != -1) AND NOT EOS (all == 20)
+    # Build a mask of valid reference rows
+    # a row is valid if NOT padding (all != -1) AND NOT EOS (all == 20)
     tri_int = tri.long()
     not_pad = (tri_int != -1).all(dim=-1)
     not_eos = ~(tri_int == 20).all(dim=-1)
-    tri_mask = not_pad & not_eos                                     # (B, L)
+    tri_mask = not_pad & not_eos 
 
-    # ---------- 2.  Collect reference triangles as sets of sorted tuples ----------
-    #      shape after sort: (B, L, 3)
+    # Collect reference triangles as sets of sorted tuples
+    # shape after sort: (B, L, 3)
     tri_sorted = tri_int.sort(dim=-1).values
     ref_sets = [
         {tuple(row.tolist()) for row in tri_sorted[b][tri_mask[b]]}
         for b in range(B)
     ]
 
-    # ---------- 3.  Extract valid prediction rows ----------
+    #  Extract valid prediction rows 
     max_len2 = indicies.size(0)
-    pred = indicies.permute(1, 0, 2).long()                          # (B, L2, 3)
+    pred = indicies.permute(1, 0, 2).long()
 
     pred_sets = []
     for b in range(B):
@@ -375,7 +381,7 @@ def iou_accuracy(tri: torch.Tensor, indicies: torch.Tensor) -> float:
         # stop at first row that contains a 20
         eos_idx = (rows == 20).any(dim=-1).nonzero(as_tuple=False)
         if eos_idx.numel():
-            rows = rows[:eos_idx[0, 0]]                              # trim after EOS
+            rows = rows[:eos_idx[0, 0]] # trim after EOS
 
         # drop padding rows (if they exist) and sort inside the triple
         rows = rows[(rows != -1).all(dim=-1)]
@@ -383,11 +389,11 @@ def iou_accuracy(tri: torch.Tensor, indicies: torch.Tensor) -> float:
 
         pred_sets.append({tuple(r.tolist()) for r in rows})
 
-    # ---------- 4.  IoU per graph ----------
+    # IoU per graph
     accuracies = []
     for ref, pred in zip(ref_sets, pred_sets):
         if len(ref) == len(pred) == 0:
-            accuracies.append(1.0)           # empty ↔ empty  ⇒ IoU = 1
+            accuracies.append(1.0)
             continue
         correct = len(ref & pred)
         total = len(pred)

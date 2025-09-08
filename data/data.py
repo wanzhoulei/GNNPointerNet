@@ -1,3 +1,12 @@
+
+'''
+Author: Wanzhou Lei @ Sept 2025. Email: wanzhou_lei@berkeley.edu
+
+This script defines all the needed tool to generate the dataset. 
+Not all functions will be used. 
+
+'''
+
 import numpy as np
 from scipy.spatial import Delaunay
 from scipy.spatial import ConvexHull
@@ -121,27 +130,22 @@ def dfs_order(adj_matrix, start_index) -> list:
 
 def bfs_order(adj_matrix, start_index):
     """
-    Perform a Breadth‑First Search (BFS) over a graph given its adjacency matrix,
+    Perform a BFS over a graph given its adjacency matrix,
     returning the order in which nodes are first visited.
 
-    Parameters
-    ----------
-    adj_matrix : np.ndarray, shape (N, N)
-        Adjacency matrix of the graph.  Non‑zero entry adj_matrix[u, v] means an
-        edge from node u to node v.  Diagonal is assumed to be zero
-        (no self‑loops).
-    start_index : int
-        Index of the node from which BFS starts.
+    Arguments: 
+        adj_matrix : np.ndarray, shape (N, N)
+            Adjacency matrix of the graph.  Non-zero entry adj_matrix[u, v] means an
+            edge from node u to node v.  Diagonal is assumed to be zero (no self-loops).
+        start_index : int
+            Index of the node from which BFS starts.
 
-    Returns
-    -------
-    visit_order : List[int]
-        A list of node indices in the order they are *first* visited by BFS.
-        (If you need a complete traversal of *all* components, call this
-        function separately for each disconnected component.)
+    Returns:
+        visit_order : List[int]
+            A list of node indices in the order they are *first* visited by BFS.
     """
     if adj_matrix.ndim != 2 or adj_matrix.shape[0] != adj_matrix.shape[1]:
-        raise ValueError("`adj_matrix` must be a square 2‑D array.")
+        raise ValueError("`adj_matrix` must be a square 2-D array.")
     if not (0 <= start_index < adj_matrix.shape[0]):
         raise IndexError("`start_index` out of range.")
 
@@ -190,27 +194,25 @@ def build_dataset(num_samples=10000, N=20, seed=42, padding_len=35, padding_val=
     """
     Build a dataset of (points, adjacency) pairs for GNN training.
     
-    Parameters
-    ----------
-    num_samples : int
-        How many samples you want in your dataset.
-    N : int
-        Number of points per sample.
-    seed : int
-        Random seed for reproducibility.
-    order: bool
-        whether to order the indices in the triangles
+    Arguments:
+        num_samples : int
+            How many samples you want in your dataset.
+        N : int
+            Number of points per sample.
+        seed : int
+            Random seed for reproducibility.
+        order: bool
+            whether to order the indices in the triangles
         
-    Returns
-    -------
-    X : np.ndarray
-        Shape (num_samples, N, 2), each row is the set of 2D points.
-    Y : np.ndarray
-        Shape (num_samples, N, N), each corresponding adjacency matrix
-    TRI: np.ndarray
-        Shape (num_samples, padding_len, 3)
+    Returns:
+        X : np.ndarray
+            Shape (num_samples, N, 2), each row is the set of 2D points.
+        Y : np.ndarray
+            Shape (num_samples, N, N), each corresponding adjacency matrix
+        TRI: np.ndarray
+            Shape (num_samples, padding_len, 3)
     """
-    # Optional: Set the random seed for reproducibility
+    
     np.random.seed(seed)
     
     # Preallocate arrays
@@ -243,31 +245,27 @@ def build_dataset_randomized(num_samples=10000, N=20, seed=42, padding_len=35, p
     Basically the same as before, but the data set will be larger
     the traversal order of triangles will be different, with randomized starting boundary triangles
 
-    Parameters
-    ----------
-    num_samples : int
-        How many samples you want in your dataset.
-    N : int
-        Number of points per sample.
-    seed : int
-        Random seed for reproducibility.
-    order: bool
-        whether to order the indices in the triangles
+    Arguments:
+        num_samples : int
+            How many samples you want in your dataset.
+        N : int
+            Number of points per sample.
+        eed : int
+            Random seed for reproducibility.
+        order: bool
+            whether to order the indices in the triangles
         
-    Returns
-    -------
-    X : np.ndarray
-        Shape (unknown_num_samples, N, 2), each row is the set of 2D points.
-    Y : np.ndarray
-        Shape (unknown_num_samples, N, N), each corresponding adjacency matrix.
-    TRI: np.ndarray
-        Shape (unknwon_num_samples, padding_len, 3)
+    Returns:
+        X : np.ndarray
+            Shape (unknown_num_samples, N, 2), each row is the set of 2D points.
+        Y : np.ndarray
+            Shape (unknown_num_samples, N, N), each corresponding adjacency matrix.
+        TRI: np.ndarray
+            Shape (unknwon_num_samples, padding_len, 3)
     '''
     
-    # Optional: Set the random seed for reproducibility
     np.random.seed(seed)
     
-    #container
     X = []
     Y = []
     TRI = []
@@ -323,22 +321,20 @@ class GraphDataSet_new(Dataset):
     
 def build_knn_graph(points, k = 5):
     """
-    Build a k‑nearest‑neighbour (k‑NN) graph for 2‑D points and return its adjacency matrix.
+    Build a knn graph for 2D points and return its adjacency matrix.
 
-    Parameters
-    ----------
+    Arguments:
         points : np.ndarray, shape (N, 2)
             Array of N points in the plane, one per row.
-        k      : int, default=5
+        k : int, default=5
             Number of nearest neighbours each node is connected to
-            (excluding the point itself).
 
-    Returns
-    -------
-    adj : np.ndarray, shape (N, N)
-        Binary (0/1) adjacency matrix.  adj[i, j] == 1 means point *i*
-        is connected to point *j*.  The matrix is symmetric.
+    Returns:
+        adj : np.ndarray, shape (N, N)
+            Binary (0/1) adjacency matrix.  adj[i, j] == 1 means point *i*
+            is connected to point *j*.  The matrix is symmetric.
     """
+
     if k < 1:
         raise ValueError("k must be a positive integer.")
     if points.ndim != 2 or points.shape[1] != 2:
@@ -347,11 +343,11 @@ def build_knn_graph(points, k = 5):
     N = points.shape[0]
     
     diff = points[:, None, :] - points[None, :, :]
-    dist2 = np.einsum("ijk,ijk->ij", diff, diff)    #
+    dist2 = np.einsum("ijk,ijk->ij", diff, diff)
 
     np.fill_diagonal(dist2, np.inf)
 
-    knn_idx = np.argpartition(dist2, kth=k, axis=1)[:, :k]   # shape (N, k)
+    knn_idx = np.argpartition(dist2, kth=k, axis=1)[:, :k]
 
     adj = np.zeros((N, N), dtype=np.uint8)
     rows = np.repeat(np.arange(N), k)
@@ -363,16 +359,15 @@ def build_knn_graph(points, k = 5):
 
 def plot_knn_graph(points, adj, index=None):
     """
-    Visualise a k‑NN graph with Matplotlib.
+    Visualise a knn graph with Matplotlib.
 
-    Parameters
-    ----------
-    points : np.ndarray, shape (N, 2)
-        2‑D coordinates of N nodes.
-    adj    : np.ndarray, shape (N, N)
-        Binary adjacency matrix returned by `build_knn_graph`.
-        Non‑zero entry adj[i, j] means an edge between i and j.
+    Arguments:
+        points : np.ndarray, shape (N, 2) 2D coordinates of N nodes.
+        adj: np.ndarray, shape (N, N)
+            Binary adjacency matrix returned by `build_knn_graph`.
+            Non-zero entry adj[i, j] means an edge between i and j.
     """
+
     if points.ndim != 2 or points.shape[1] != 2:
         raise ValueError("`points` must have shape (N, 2).")
     if adj.shape[0] != adj.shape[1] or adj.shape[0] != points.shape[0]:
@@ -398,7 +393,7 @@ def plot_knn_graph(points, adj, index=None):
     ax.set_aspect("equal")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
-    ax.set_title("k‑NN graph")
+    ax.set_title("k-NN graph")
 
     if index is not None:
         ax.scatter(points[:, 0][:index], points[:, 1][:index], color='red', zorder=10)
@@ -407,19 +402,17 @@ def is_connected(points, adj_matrix) -> bool:
     """
     Check in O(N + E) time whether an undirected graph is connected.
 
-    Parameters
-    ----------
-    points : np.ndarray, shape (N, 2)
-        Coordinates of N 2‑D points (only used to sanity‑check N).
-    adj_matrix : np.ndarray, shape (N, N)
-        Adjacency matrix (non‑zero ⇒ edge).  Assumed symmetric
-        and with zero diagonal.
+    Arguments:
+        points : np.ndarray, shape (N, 2)
+            Coordinates of N 2D points (only used to sanity check N).
+        adj_matrix : np.ndarray, shape (N, N)
+            Adjacency matrix (non zero edge).  Assumed symmetric
+            and with zero diagonal.
 
-    Returns
-    -------
-    connected : bool
-        True  → every node is reachable from every other node  
-        False → the graph has ≥ 2 connected components
+    Returns:
+        connected : bool
+            True  -> every node is reachable from every other node  
+            False -> the graph has >= 2 connected components
     """
     if points.ndim != 2 or points.shape[1] != 2:
         raise ValueError("`points` must have shape (N, 2).")
@@ -444,7 +437,7 @@ def is_connected(points, adj_matrix) -> bool:
         visited[unvisited] = True
         queue.extend(unvisited.tolist())
 
-        if visited.all():    # early exit: all nodes reached
+        if visited.all():    # early exit, all nodes reached
             return True
 
     return False             # some nodes never reached
@@ -524,7 +517,6 @@ def sample_delauney_new(N=20, order=bfs_order, k=5, train=True):
         return [points_list[0]], [tri_list[0]]
 
 def build_dataset_new(num_samples=10000, N=20, seed=42, padding_len=35, padding_val=-1, order=bfs_order, k=5, train=True):
-    # Optional: Set the random seed for reproducibility
     np.random.seed(seed)
     
     #container
