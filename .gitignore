@@ -26,3 +26,6 @@ data/processed/*
 experiments/runs/*
 experiments/checkpoints/*
 experiments/figures/*
+datasets/*
+.DS_Store
+
