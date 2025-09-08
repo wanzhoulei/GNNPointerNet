@@ -29,11 +29,11 @@ Training arguments:
     --lr                Learning rate (default: 1e-3)
 Model hyperparameters:
     --embedding_dim     Node embedding dimension (default: 32)
-    --num_layers        Number of GNN message-passing layers (default: 4)
+    --num_layers        Number of GNN message-passing layers (default: 5)
     --num_layers_LSTM   Number of LSTM layers in pointer network (default: 1)
-    --hidden_dim        Hidden dimension of LSTM (default: 64)
+    --hidden_dim        Hidden dimension of LSTM (default: 256)
     --max_steps         Maximum decoding steps (default: 40)
-    --attention         Whether to use attention in decoder (default: False)
+    --attention         Whether to use attention in decoder (default: True)
     --num_cold_start    Cold-start tokens (default: 0)
 Logging / checkpoint arguments:
     --save_dir          Root folder to store outputs (default: "experiments/checkpoints")
@@ -64,7 +64,6 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-# Your package imports (as you specified)
 from data.data import *
 from gnnpointernet.models.model import *
 from gnnpointernet.losses.loss_functions import *
@@ -230,11 +229,11 @@ if __name__ == "__main__":
 
     # model hyperparameters (now overridable via CLI)
     parser.add_argument("--embedding_dim", type=int, default=32)
-    parser.add_argument("--num_layers", type=int, default=4)
+    parser.add_argument("--num_layers", type=int, default=5)
     parser.add_argument("--num_layers_LSTM", type=int, default=1)
-    parser.add_argument("--hidden_dim", type=int, default=64)
+    parser.add_argument("--hidden_dim", type=int, default=256)
     parser.add_argument("--max_steps", type=int, default=40)
-    parser.add_argument("--attention", type=str2bool, default=False)
+    parser.add_argument("--attention", type=str2bool, default=True)
     parser.add_argument("--num_cold_start", type=int, default=0)
 
     # logging/checkpoint args
